@@ -1,5 +1,6 @@
 from firebase import firebase
 import json
+import os
 
 '''
 Simple Upload to Real-Time Firebase (No Authentication Yet)
@@ -10,7 +11,7 @@ Simple Upload to Real-Time Firebase (No Authentication Yet)
 
 # Does not account for duplicates yet.
 opp_app = firebase.FirebaseApplication('https://findmyopportunities-31222.firebaseio.com/', None)
-f = open('Datasets/Opportunities.json',)
+f = open(os.path.dirname(os.path.realpath(__file__)) + '/Datasets/Opportunities.json',)
 
 for opportunity in json.load(f):
     result = opp_app.post('', opportunity)

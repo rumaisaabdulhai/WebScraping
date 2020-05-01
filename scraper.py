@@ -36,7 +36,7 @@ def getContent(url):
     options = webdriver.chrome.options.Options()
     options.add_argument('--headless')
     options.add_argument('--disable-gpu')
-    driver = webdriver.Chrome(options=options)
+    driver = webdriver.Chrome(options=options, executable_path='/usr/local/bin/chromedriver')
     driver.get(url)
 
     time.sleep(5)
@@ -86,11 +86,11 @@ def formatCards(cards):
         # DATA, in order that they should appear
         title = ""
         description = ""
-        skills = []
+        skills = ""
         date_time = ""
         where = ""
         organizer = ""
-        address = []
+        address = ""
         contact = ""
         more_info = ""
         upload_date = ""
@@ -105,7 +105,7 @@ def formatCards(cards):
         for line in card[1]:
             if line.startswith(skills_label):
                 skills_str = line
-        skills = skills_str.replace(skills_label, "").split(", ")
+        skills = skills_str.replace(skills_label, "")
 
         # WHERE
         where_str = ""
@@ -137,7 +137,7 @@ def formatCards(cards):
         for line in card[1]:
             if line.startswith(address_label):
                 address_str = line
-        address = address_str.replace(address_label, "").split(", ")
+        address = address_str.replace(address_label, "")
 
         # CONTACT INFO
         contact_str = ""
@@ -145,7 +145,7 @@ def formatCards(cards):
         for line in card[1]:
             if line.startswith(contact_label):
                 contact_str = line
-        contact = contact_str.replace(contact_label, "").split(", ")
+        contact = contact_str.replace(contact_label, "")
 
         # MORE INFO
         more_info_str = ""
