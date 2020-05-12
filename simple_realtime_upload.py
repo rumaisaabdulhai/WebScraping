@@ -14,4 +14,4 @@ opp_app = firebase.FirebaseApplication('https://findmyopportunities-31222.fireba
 f = open(os.path.dirname(os.path.realpath(__file__)) + '/Datasets/Opportunities.json',)
 
 for opportunity in json.load(f):
-    result = opp_app.post('', opportunity)
+    result = opp_app.post('/Opportunities', opportunity)
