@@ -1,3 +1,6 @@
+###########
+# IMPORTS #
+###########
 import csv
 import os
 import firebase_admin
@@ -6,6 +9,11 @@ from firebase_admin import credentials, firestore
 
 # Code belongs to:
 # Source: https://medium.com/@cbrannen/importing-data-into-firestore-using-python-dce2d6d3cd51
+
+'''
+Not currently using Code. Will consider if 
+doing Cloud Database instead of RealTime Database.
+'''
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 rel_path = '/Datasets/'
