@@ -16,6 +16,14 @@ import time
 from datetime import date
 from csv import writer
 import os
+import geopy as gp
+
+import json
+import requests
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as ec
 
 # Useful Links:
 # Intro to Webscraping: https://www.youtube.com/watch?v=XQgXKtPSzUI
@@ -36,10 +44,28 @@ def getContent(url):
     options = webdriver.chrome.options.Options()
     options.add_argument('--headless')
     options.add_argument('--disable-gpu')
+    # options.add_argument('--kiosk')
     driver = webdriver.Chrome(options=options, executable_path='/usr/local/bin/chromedriver')
+    
+    wait = WebDriverWait(driver, 10)
     driver.get(url)
+    while True:
+        try:
+            loadmore = wait.until(ec.visibility_of_element_located((By.LINK_TEXT, "See More Projects")))
+            driver.execute_script("arguments[0].click();", loadmore)
+            print("clicked")
+            wait.until(ec.staleness_of(loadmore))
+        except Exception:break
 
-    time.sleep(5)
+    # for elems in wait.until(ec.presence_of_all_elements_located((By.XPATH,'//*[@id="3-107012-107012"]'))):
+    #     print(elems)
+
+    # element = driver.find_element_by_link_text("See More Projects");
+    # ele = WebDriverWait(driver, 20).until(ec.visibility_of_element_located((By.LINK_TEXT, "See More Projects")))
+    # ele.click()
+    # element = driver.find_element_by_xpath('//a[@class="pb-link-sm-orange normal-weight"]')
+        
+    time.sleep(10)
     content = driver.page_source.encode('utf-8').strip()
     page_soup = soup(content,"lxml")
     driver.quit()
@@ -61,17 +87,19 @@ def getCards(url):
         # Description 
         description = []
         ext_url = card.span.span.a.get('href')
-        ext_soup = getContent(ext_url)
-        content = ext_soup.find("div", {"class": "sharp-c-volunteer-opportunity-details__body"})
-        for text in content.findAll("p"):
-            description.append(text.text)
+        
+        if "createthegood.aarp.org" in ext_url:
+            ext_soup = getContent(ext_url)
+            content = ext_soup.find("div", {"class": "sharp-c-volunteer-opportunity-details__body"})
+            for text in content.findAll("p"):
+                description.append(text.text)
 
-        link = content.find('a', href=True, text='Click here')
-        if link != None:
-            link = link['href']
-        else:
-            link = ""
-        cards.append([title,description,link])
+            link = content.find('a', href=True, text='Click here')
+            if link != None:
+                link = link['href']
+            else:
+                link = ""
+            cards.append([title,description,link])
 
     return cards
 
@@ -94,6 +122,8 @@ def formatCards(cards):
         contact = ""
         more_info = ""
         upload_date = ""
+        longitude = ""
+        latitude = ""
         
         # TITLE
         title_label = "Title:"
@@ -159,6 +189,16 @@ def formatCards(cards):
         upload_date_label = "Upload Date:"
         upload_date = date.today().strftime("%m/%d/%y")
 
+        # LATITUDE AND LONGITUDE
+        locator = gp.Nominatim(user_agent="myGeocoder")
+        location = locator.geocode(address)
+
+        latitude_label = "latitude"
+        latitude = location.latitude
+
+        longitude_label = "longitude"
+        longitude = location.longitude
+
         # DESCRIPTION
         description_label = "Description:"
         description = '\n'.join(card[1]).replace(skills_str, "").replace(date_str, "").replace(organizer_str, "").replace(address_str, "").replace(contact_str, "").replace(more_info_str, "").strip('\n')
@@ -172,7 +212,9 @@ def formatCards(cards):
                     address_label,
                     contact_label,
                     more_info_label,
-                    upload_date_label  ]
+                    upload_date_label,
+                    latitude_label,
+                    longitude_label  ]
 
         values = [  title,
                     description,
@@ -183,7 +225,9 @@ def formatCards(cards):
                     address,
                     contact,
                     more_info,
-                    upload_date ]
+                    upload_date,
+                    latitude,
+                    longitude  ]
 
         # APPEND TO CSV
         append_to_csv(file_name, keys, values, rel_path)
@@ -218,27 +262,19 @@ def printFormattedCards(cards):
     count = 0
     for card in cards:
         count+=1
-        print("CARD: " + str(count))
-        print()
-        print("TITLE: " + str(card[0]))
-        print()
-        print("DESCRIPTION:\n" + str(card[1]))
-        print()
-        print("SKILLS:" + str(card[2]))
-        print()
-        print("DATE: " + str(card[3]))
-        print()
-        print("WHERE: " + str(card[4]))
-        print()
-        print("ORGANIZER: " + str(card[5]))
-        print()
-        print("ADDRESS: " + str(card[6]))
-        print()
-        print("CONTACT: " + str(card[7]))
-        print()
-        print("MORE INFO: " + str(card[8]))
-        print()
-        print("UPLOAD DATE: " + str(card[9]))
+        print("CARD: " + str(count) + '\n')
+        print("TITLE: " + str(card[0]) + '\n')
+        print("DESCRIPTION:\n" + str(card[1]) + '\n')
+        print("SKILLS:" + str(card[2]) + '\n')
+        print("DATE: " + str(card[3]) + '\n')
+        print("WHERE: " + str(card[4]) + '\n')
+        print("ORGANIZER: " + str(card[5]) + '\n')
+        print("ADDRESS: " + str(card[6]) + '\n')
+        print("CONTACT: " + str(card[7]) + '\n')
+        print("MORE INFO: " + str(card[8]) + '\n')
+        print("UPLOAD DATE: " + str(card[9]) + '\n')
+        print("LATITUDE: " + str(card[10]) + '\n')
+        print("LONGITUDE: " + str(card[11]) + '\n')
         print("------------------------------------\n")
 
 def append_to_csv(file_name, keys, values, rel_path):
